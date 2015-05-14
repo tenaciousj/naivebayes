@@ -46,25 +46,69 @@ class Bayes_Classifier:
          if loaded_review[7] == "1":
             for word in words:
                if self.negative_words[word]:
-                  self.negative_words[word] += 1
+                  self.negative_words[word][1] += 1
                else:
-                  self.negative_words[word] = 1
+                  self.negative_words[word][0] = 1
+                  self.negative_words[word][1] = 1
 
          #otherwise it is a positive review
          else if loaded_review[7] == "5":
             for word in words:
                if self.positive_words[word]:
-                  self.positive_words[word] += 1
+                  self.positive_words[word][1] += 1
                else:
-                  self.positive_words[word] = 1
+                  self.positive_words[word][0] = 1
+                  self.positive_words[word][1] = 1
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
     
-   def classify(self, sText):
+   def classify(self, sText, num_doc_pos, num_doc_neg):
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
+
+      #we might have to load pickle dictionaries
+      prior_dict_pos, prior_dict_neg = calc_cond_prior_prob(sText, num_doc_pos, num_doc_neg)
+      pos_class_prior, neg_class_prior = class_prior_prob(num_doc_pos, num_doc_neg)
+
+      prob_pos_given_text = do_bayes(prior_dict_pos, pos_class_prior)
+      prob_neg_given_text = do_bayes(prior_dict_neg, neg_class_prior)
+
+      if prob_pos_given_text > prob_neg_given_text:
+         return "positive"
+      else:
+         return "negative"
+
+   def calc_cond_prior_prob(self, sText, num_doc_pos, num_doc_neg):
+      prior_dict_pos = {}
+      prior_dict_neg = {}
+      for word in sText:
+         if prior_dict_pos[word]:
+            prior_dict_pos[word] = pres_freq[0]/num_doc_pos
+         
+         else:
+            prior_dict_pos[word] = 0
+
+         if prior_dict_neg[word]:
+            prior_dict_neg[word] = pres_freq[0]/num_doc_neg
+         
+         else:
+            prior_dict_neg[word] = 0
+
+      return prior_dict_pos, prior_dict_neg
+
+   def class_prior_prob(self, num_doc_pos, num_doc_neg):
+      total_doc = num_doc_pos + num_doc_neg
+      return num_doc_pos/total_doc, num_doc_neg/total_doc
+
+   def do_bayes(self, prior_dict, class_prior):
+      prob = 1
+      for key in prior_dict:
+         prob *= prior_dict[key]
+      return class_prior*prob
+
+
 
    def loadFile(self, sFilename):
       """Given a file name, return the contents of the file as a string."""
