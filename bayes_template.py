@@ -75,7 +75,10 @@ class Bayes_Classifier:
       prob_pos_given_text = do_bayes(prior_dict_pos, pos_class_prior)
       prob_neg_given_text = do_bayes(prior_dict_neg, neg_class_prior)
 
-      if prob_pos_given_text > prob_neg_given_text:
+      threshold = 0.2
+      if abs(prob_pos_given_text - prob_neg_given_text) < threshold:
+         return "neutral"
+      elif prob_pos_given_text>prob_neg_given_text:
          return "positive"
       else:
          return "negative"
