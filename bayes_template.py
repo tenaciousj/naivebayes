@@ -18,7 +18,15 @@ class Bayes_Classifier:
       self.negative_words = {}
 
       #If the pickled files exist, then load the dictionaries into memory.
+      if os.path.exists("positive.p"):
+         self.positive_words = pickle.load(open("positive.p", rb))
+      if os.path.exists("negative.p"):
+         self.negative_words = pickle.load(open("negative.p", rb))
+
       #If the pickled files do not exist, then train the system.
+      else:
+         self.train()
+      
 
    def train(self):   
       """Trains the Naive Bayes Sentiment Classifier."""
@@ -31,7 +39,7 @@ class Bayes_Classifier:
       
       #Parse each file
       for review in IFileList:
-         loaded_review = loadFile(review)
+         loaded_review = load(review)
          words = self.tokenize(loaded_review)
 
          #it is a negative review
@@ -52,8 +60,6 @@ class Bayes_Classifier:
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
-
-
     
    def classify(self, sText):
       """Given a target string sText, this function returns the most likely document
