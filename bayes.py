@@ -240,5 +240,12 @@ class Bayes_Classifier:
                      self.positive_words[word][0] += 1
                      self.positive_words[word][1] = 1
 
-   
+         #now run classification on the testing set 
+         #not sure how to save
+
+
+
 b = Bayes_Classifier()
+
+
+
