@@ -50,7 +50,7 @@ class Bayes_Classifier:
          if review[23] == "1":
             self.self.num_doc_neg += 1
             for word in words:
-               if self.negative_words[word]:
+               if word in self.negative_words:
                   self.negative_words[word][1] += 1
                else:
                   self.negative_words[word][0] += 1
@@ -60,7 +60,7 @@ class Bayes_Classifier:
          elif review[23] == "5":
             self.self.num_doc_pos += 1
             for word in words:
-               if self.positive_words[word]:
+               if word in self.positive_words:
                   self.positive_words[word][1] += 1
                else:
                   self.positive_words[word][0] += 1
@@ -166,6 +166,18 @@ class Bayes_Classifier:
 
       return lTokens
 
-   #def cross_validation(self, self.num_doc_pos, self.num_doc_neg)   
+   def cross_validation(self):
+      IFileList =[]
+      for fFileObj in os.walk("movies_reviews\\"):
+         IFileList = fFileObj[2]
+         break
+      
+      #Parse each file
+      for review in IFileList:
+         review = "movies_reviews\\" + review
+         loaded_review = self.loadFile(review)
+         words = self.tokenize(loaded_review)
+
+
 b = Bayes_Classifier()
 print b.classify("I love my AI Class!")
