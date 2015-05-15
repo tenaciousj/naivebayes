@@ -176,5 +176,59 @@ class Bayes_Classifier:
 
       return lTokens
 
-   #def cross_validation(self, self.num_doc_pos, self.num_doc_neg)   
+   def cross_validation(self):
+      IFileList =[]
+      for fFileObj in os.walk("movies_reviews\\"):
+         IFileList = fFileObj[2]
+         break
+      
+      #shuffling the list in place
+      random.shuffle(IFileList)
+
+      data_size=len(IFileList) #number of instances
+
+      #bin size
+      bin_size=int(round(data_size/10))
+
+      #list of ten bins. each element is a list. [[bin1]...[bin10]]
+      list_of_bins=[IFileList[i:i + 10] for i in range(0, data_size, 10)]
+
+      testing_set=[]
+      training_set=[]
+
+      for j in range(10):
+         testing_set=list_of_bins[j]
+
+         for bin in list_of_bins:
+            if bin!=testing_set:
+               training_set.extend(bin)
+
+
+         for review in training_set:
+            review = "movies_reviews\\" + review
+            loaded_review = self.loadFile(review)
+            words = self.tokenize(loaded_review)
+
+            #it is a negative review
+            #print loaded_review
+            if review[23] == "1":
+               self.self.num_doc_neg += 1
+               for word in words:
+                  if word in self.negative_words:
+                     self.negative_words[word][1] += 1
+                  else:
+                     self.negative_words[word][0] += 1
+                     self.negative_words[word][1] = 1
+
+            #otherwise it is a positive review
+            elif review[23] == "5":
+               self.self.num_doc_pos += 1
+               for word in words:
+                  if word in self.positive_words:
+                     self.positive_words[word][1] += 1
+                  else:
+                     self.positive_words[word][0] += 1
+                     self.positive_words[word][1] = 1
+
+   
 b = Bayes_Classifier()
