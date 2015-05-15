@@ -4,7 +4,7 @@
 #
 #
 
-import math, os, pickle, re
+import math, os, pickle, re, random
 
 class Bayes_Classifier:
 
@@ -46,12 +46,14 @@ class Bayes_Classifier:
          review = "movies_reviews/" + review
          loaded_review = self.loadFile(review)
          words = self.tokenize(loaded_review)
+         words = [ex.lower() for ex in words]
          visited_pos = {}
          visited_neg = {}
 
          #it is a negative review
          #print loaded_review
-         if review[7] == "1":
+
+         if review[22] == "1":
             self.num_doc_neg += 1
             for word in words:
                if word in self.negative_words:
@@ -60,11 +62,10 @@ class Bayes_Classifier:
                      visited_neg[word] = True
                   self.negative_words[word][1] += 1
                else:
-                  self.negative_words[word][0] = 1
-                  self.negative_words[word][1] = 1
+                  self.negative_words[word] = [1,1]
 
          #otherwise it is a positive review
-         elif review[7] == "5":
+         elif review[22] == "5":
             self.num_doc_pos += 1
             for word in words:
                if word in self.positive_words:
@@ -73,8 +74,7 @@ class Bayes_Classifier:
                      visited_pos[word] = True
                   self.positive_words[word][1] += 1
                else:
-                  self.positive_words[word][0] = 1
-                  self.positive_words[word][1] = 1
+                  self.positive_words[word] = [1,1]
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
@@ -88,10 +88,16 @@ class Bayes_Classifier:
       prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
-      prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
-      prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
+      print prior_dict_pos
 
-      threshold = 0.2
+
+      prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
+      print str(prob_pos_given_text) + " pos probability"
+
+      prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
+      print str(prob_neg_given_text) + " neg probability"
+
+      threshold = 0.000000000001
       if abs(prob_pos_given_text - prob_neg_given_text) < threshold:
          return "neutral"
       elif prob_pos_given_text>prob_neg_given_text:
@@ -103,26 +109,30 @@ class Bayes_Classifier:
       #Check to see if +1 smoothing is necessary because of the 0 occurence
       prior_dict_pos = {}
       prior_dict_neg = {}
+
+      sText = self.tokenize(sText)
+      sText = [ex.lower() for ex in sText]
       for word in sText:
          if word in self.positive_words:
             pres_freq = self.positive_words[word]
-            prior_dict_pos[word] = pres_freq[0]/self.num_doc_pos
+            prior_dict_pos[word] = pres_freq[0]/float(self.num_doc_pos)
          
          else:
             prior_dict_pos[word] = 0
 
          if word in self.negative_words:
             pres_freq = self.negative_words[word]
-            prior_dict_neg[word] = pres_freq[0]/self.num_doc_neg
+            prior_dict_neg[word] = pres_freq[0]/float(self.num_doc_neg)
          
          else:
             prior_dict_neg[word] = 0
 
+      #print prior_dict_pos
       return prior_dict_pos, prior_dict_neg
 
    def class_prior_prob(self):
       total_doc = self.num_doc_pos + self.num_doc_neg
-      return self.num_doc_pos/total_doc, self.num_doc_neg/total_doc
+      return self.num_doc_pos/float(total_doc), self.num_doc_neg/float(total_doc)
 
    def do_bayes(self, prior_dict, class_prior):
       prob = 1
@@ -178,7 +188,7 @@ class Bayes_Classifier:
 
    def cross_validation(self):
       IFileList =[]
-      for fFileObj in os.walk("movies_reviews\\"):
+      for fFileObj in os.walk("movies_reviews/"):
          IFileList = fFileObj[2]
          break
       
@@ -212,7 +222,7 @@ class Bayes_Classifier:
             #it is a negative review
             #print loaded_review
             if review[23] == "1":
-               self.self.num_doc_neg += 1
+               self.num_doc_neg += 1
                for word in words:
                   if word in self.negative_words:
                      self.negative_words[word][1] += 1
@@ -222,7 +232,7 @@ class Bayes_Classifier:
 
             #otherwise it is a positive review
             elif review[23] == "5":
-               self.self.num_doc_pos += 1
+               self.num_doc_pos += 1
                for word in words:
                   if word in self.positive_words:
                      self.positive_words[word][1] += 1
