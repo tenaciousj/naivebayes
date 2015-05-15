@@ -30,40 +30,50 @@ class Bayes_Classifier:
       else:
          self.train()
 
+
+
    def train(self):   
       """Trains the Naive Bayes Sentiment Classifier."""
 
+
       #Gets the names of all the files in the "movies_reviews/" directory
       IFileList =[]
-      for fFileObj in os.walk("movies_reviews\\"):
+      for fFileObj in os.walk("movies_reviews/"):
          IFileList = fFileObj[2]
-         break
       
       #Parse each file
       for review in IFileList:
-         review = "movies_reviews\\" + review
+         review = "movies_reviews/" + review
          loaded_review = self.loadFile(review)
          words = self.tokenize(loaded_review)
+         visited_pos = {}
+         visited_neg = {}
 
          #it is a negative review
          #print loaded_review
-         if review[23] == "1":
-            self.self.num_doc_neg += 1
+         if review[7] == "1":
+            self.num_doc_neg += 1
             for word in words:
                if word in self.negative_words:
+                  if word not in visited_neg:
+                     self.negative_words[word][0] += 1
+                     visited_neg[word] = True
                   self.negative_words[word][1] += 1
                else:
-                  self.negative_words[word][0] += 1
+                  self.negative_words[word][0] = 1
                   self.negative_words[word][1] = 1
 
          #otherwise it is a positive review
-         elif review[23] == "5":
-            self.self.num_doc_pos += 1
+         elif review[7] == "5":
+            self.num_doc_pos += 1
             for word in words:
                if word in self.positive_words:
+                  if word not in visited_pos:
+                     self.positive_words[word][0] += 1
+                     visited_pos[word] = True
                   self.positive_words[word][1] += 1
                else:
-                  self.positive_words[word][0] += 1
+                  self.positive_words[word][0] = 1
                   self.positive_words[word][1] = 1
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
@@ -94,14 +104,14 @@ class Bayes_Classifier:
       prior_dict_pos = {}
       prior_dict_neg = {}
       for word in sText:
-         if self.positive_words[word]:
+         if word in self.positive_words:
             pres_freq = self.positive_words[word]
             prior_dict_pos[word] = pres_freq[0]/self.num_doc_pos
          
          else:
             prior_dict_pos[word] = 0
 
-         if self.negative_words[word]:
+         if word in self.negative_words:
             pres_freq = self.negative_words[word]
             prior_dict_neg[word] = pres_freq[0]/self.num_doc_neg
          
@@ -166,18 +176,5 @@ class Bayes_Classifier:
 
       return lTokens
 
-   def cross_validation(self):
-      IFileList =[]
-      for fFileObj in os.walk("movies_reviews\\"):
-         IFileList = fFileObj[2]
-         break
-      
-      #Parse each file
-      for review in IFileList:
-         review = "movies_reviews\\" + review
-         loaded_review = self.loadFile(review)
-         words = self.tokenize(loaded_review)
-
-
+   #def cross_validation(self, self.num_doc_pos, self.num_doc_neg)   
 b = Bayes_Classifier()
-print b.classify("I love my AI Class!")
