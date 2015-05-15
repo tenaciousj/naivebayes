@@ -29,7 +29,6 @@ class Bayes_Classifier:
       #If the pickled files do not exist, then train the system.
       else:
          self.train()
-      
 
    def train(self):   
       """Trains the Naive Bayes Sentiment Classifier."""
@@ -42,11 +41,13 @@ class Bayes_Classifier:
       
       #Parse each file
       for review in IFileList:
-         loaded_review = loadFile(review)
-         words = tokenize(loaded_review)
+         review = "movies_reviews\\" + review
+         loaded_review = self.loadFile(review)
+         words = self.tokenize(loaded_review)
 
          #it is a negative review
-         if loaded_review[7] == "1":
+         #print loaded_review
+         if review[23] == "1":
             self.self.num_doc_neg += 1
             for word in words:
                if self.negative_words[word]:
@@ -56,7 +57,7 @@ class Bayes_Classifier:
                   self.negative_words[word][1] = 1
 
          #otherwise it is a positive review
-         elif loaded_review[7] == "5":
+         elif review[23] == "5":
             self.self.num_doc_pos += 1
             for word in words:
                if self.positive_words[word]:
@@ -75,10 +76,10 @@ class Bayes_Classifier:
 
       #we might have to load pickle dictionaries
       prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
-      pos_class_prior, neg_class_prior = class_prior_prob()
+      pos_class_prior, neg_class_prior = self.class_prior_prob()
 
-      prob_pos_given_text = do_bayes(prior_dict_pos, pos_class_prior)
-      prob_neg_given_text = do_bayes(prior_dict_neg, neg_class_prior)
+      prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
+      prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
 
       threshold = 0.2
       if abs(prob_pos_given_text - prob_neg_given_text) < threshold:
@@ -167,3 +168,4 @@ class Bayes_Classifier:
 
    #def cross_validation(self, self.num_doc_pos, self.num_doc_neg)   
 b = Bayes_Classifier()
+print b.classify("I love my AI Class!")
