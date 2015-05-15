@@ -48,7 +48,7 @@ class Bayes_Classifier:
                if self.negative_words[word]:
                   self.negative_words[word][1] += 1
                else:
-                  self.negative_words[word][0] = 1
+                  self.negative_words[word][0] += 1
                   self.negative_words[word][1] = 1
 
          #otherwise it is a positive review
@@ -57,7 +57,7 @@ class Bayes_Classifier:
                if self.positive_words[word]:
                   self.positive_words[word][1] += 1
                else:
-                  self.positive_words[word][0] = 1
+                  self.positive_words[word][0] += 1
                   self.positive_words[word][1] = 1
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
@@ -84,6 +84,7 @@ class Bayes_Classifier:
          return "negative"
 
    def calc_cond_prior_prob(self, sText, num_doc_pos, num_doc_neg):
+      #Check to see if +1 smoothing is necessary because of the 0 occurence
       prior_dict_pos = {}
       prior_dict_neg = {}
       for word in sText:
