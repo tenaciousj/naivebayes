@@ -63,7 +63,7 @@ class Bayes_Classifier:
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
     
-   def classify(self, sText, num_doc_pos, num_doc_neg):
+   def classify(self, sText, num_doc_pos, num_doc_neg, positive_words, negative_words):
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
@@ -87,13 +87,15 @@ class Bayes_Classifier:
       prior_dict_pos = {}
       prior_dict_neg = {}
       for word in sText:
-         if prior_dict_pos[word]:
+         if self.positive_words[word]:
+            pres_freq = self.positive_words[word]
             prior_dict_pos[word] = pres_freq[0]/num_doc_pos
          
          else:
             prior_dict_pos[word] = 0
 
-         if prior_dict_neg[word]:
+         if self.negative_words[word]:
+            pres_freq = self.negative_words[word]
             prior_dict_neg[word] = pres_freq[0]/num_doc_neg
          
          else:
@@ -110,8 +112,6 @@ class Bayes_Classifier:
       for key in prior_dict:
          prob *= prior_dict[key]
       return class_prior*prob
-
-
 
    def loadFile(self, sFilename):
       """Given a file name, return the contents of the file as a string."""
@@ -159,4 +159,5 @@ class Bayes_Classifier:
 
       return lTokens
 
+   #def cross_validation(self, num_doc_pos, num_doc_neg)   
 b = Bayes_Classifier()
