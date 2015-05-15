@@ -17,11 +17,14 @@ class Bayes_Classifier:
       self.positive_words = {}
       self.negative_words = {}
 
+      self.num_doc_pos = 0
+      self.num_doc_neg = 0
+
       #If the pickled files exist, then load the dictionaries into memory.
       if os.path.exists("positive.p"):
-         self.positive_words = pickle.load(open("positive.p", rb))
+         self.positive_words = pickle.load(open("positive.p", "rb"))
       if os.path.exists("negative.p"):
-         self.negative_words = pickle.load(open("negative.p", rb))
+         self.negative_words = pickle.load(open("negative.p", "rb"))
 
       #If the pickled files do not exist, then train the system.
       else:
@@ -33,17 +36,18 @@ class Bayes_Classifier:
 
       #Gets the names of all the files in the "movies_reviews/" directory
       IFileList =[]
-      for fFileObj in os.walk("movies_reviews/"):
+      for fFileObj in os.walk("movies_reviews\\"):
          IFileList = fFileObj[2]
          break
       
       #Parse each file
       for review in IFileList:
-         loaded_review = load(review)
-         words = self.tokenize(loaded_review)
+         loaded_review = loadFile(review)
+         words = tokenize(loaded_review)
 
          #it is a negative review
          if loaded_review[7] == "1":
+            self.self.num_doc_neg += 1
             for word in words:
                if self.negative_words[word]:
                   self.negative_words[word][1] += 1
@@ -52,7 +56,8 @@ class Bayes_Classifier:
                   self.negative_words[word][1] = 1
 
          #otherwise it is a positive review
-         else if loaded_review[7] == "5":
+         elif loaded_review[7] == "5":
+            self.self.num_doc_pos += 1
             for word in words:
                if self.positive_words[word]:
                   self.positive_words[word][1] += 1
@@ -63,14 +68,14 @@ class Bayes_Classifier:
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
     
-   def classify(self, sText, num_doc_pos, num_doc_neg, positive_words, negative_words):
+   def classify(self, sText):
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
 
       #we might have to load pickle dictionaries
-      prior_dict_pos, prior_dict_neg = calc_cond_prior_prob(sText, num_doc_pos, num_doc_neg)
-      pos_class_prior, neg_class_prior = class_prior_prob(num_doc_pos, num_doc_neg)
+      prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
+      pos_class_prior, neg_class_prior = class_prior_prob()
 
       prob_pos_given_text = do_bayes(prior_dict_pos, pos_class_prior)
       prob_neg_given_text = do_bayes(prior_dict_neg, neg_class_prior)
@@ -83,30 +88,30 @@ class Bayes_Classifier:
       else:
          return "negative"
 
-   def calc_cond_prior_prob(self, sText, num_doc_pos, num_doc_neg):
+   def calc_cond_prior_prob(self, sText):
       #Check to see if +1 smoothing is necessary because of the 0 occurence
       prior_dict_pos = {}
       prior_dict_neg = {}
       for word in sText:
          if self.positive_words[word]:
             pres_freq = self.positive_words[word]
-            prior_dict_pos[word] = pres_freq[0]/num_doc_pos
+            prior_dict_pos[word] = pres_freq[0]/self.num_doc_pos
          
          else:
             prior_dict_pos[word] = 0
 
          if self.negative_words[word]:
             pres_freq = self.negative_words[word]
-            prior_dict_neg[word] = pres_freq[0]/num_doc_neg
+            prior_dict_neg[word] = pres_freq[0]/self.num_doc_neg
          
          else:
             prior_dict_neg[word] = 0
 
       return prior_dict_pos, prior_dict_neg
 
-   def class_prior_prob(self, num_doc_pos, num_doc_neg):
-      total_doc = num_doc_pos + num_doc_neg
-      return num_doc_pos/total_doc, num_doc_neg/total_doc
+   def class_prior_prob(self):
+      total_doc = self.num_doc_pos + self.num_doc_neg
+      return self.num_doc_pos/total_doc, self.num_doc_neg/total_doc
 
    def do_bayes(self, prior_dict, class_prior):
       prob = 1
@@ -160,5 +165,5 @@ class Bayes_Classifier:
 
       return lTokens
 
-   #def cross_validation(self, num_doc_pos, num_doc_neg)   
+   #def cross_validation(self, self.num_doc_pos, self.num_doc_neg)   
 b = Bayes_Classifier()
