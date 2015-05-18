@@ -23,8 +23,10 @@ class Bayes_Classifier:
       #If the pickled files exist, then load the dictionaries into memory.
       if os.path.exists("positive.p"):
          self.positive_words = pickle.load(open("positive.p", "rb"))
+         self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
       if os.path.exists("negative.p"):
          self.negative_words = pickle.load(open("negative.p", "rb"))
+         self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
 
       #If the pickled files do not exist, then train the system.
       else:
@@ -53,6 +55,8 @@ class Bayes_Classifier:
          #it is a negative review
          #print loaded_review
 
+
+         #presence, frequency
          if review[22] == "1":
             self.num_doc_neg += 1
             for word in words:
@@ -78,13 +82,17 @@ class Bayes_Classifier:
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
-    
+
+      
+      pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
+      pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
+
+
    def classify(self, sText):
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
 
-      #we might have to load pickle dictionaries
       prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
@@ -97,10 +105,7 @@ class Bayes_Classifier:
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
       print str(prob_neg_given_text) + " neg probability"
 
-      threshold = 0.000000000001
-      if abs(prob_pos_given_text - prob_neg_given_text) < threshold:
-         return "neutral"
-      elif prob_pos_given_text>prob_neg_given_text:
+      if prob_pos_given_text>prob_neg_given_text:
          return "positive"
       else:
          return "negative"
@@ -114,18 +119,18 @@ class Bayes_Classifier:
       sText = [ex.lower() for ex in sText]
       for word in sText:
          if word in self.positive_words:
-            pres_freq = self.positive_words[word]
-            prior_dict_pos[word] = pres_freq[0]/float(self.num_doc_pos)
+            presence_pos = self.positive_words[word][0]
+            prior_dict_pos[word] = presence_pos/float(self.num_doc_pos) + 1
          
          else:
-            prior_dict_pos[word] = 0
+            prior_dict_pos[word] = 1
 
          if word in self.negative_words:
-            pres_freq = self.negative_words[word]
-            prior_dict_neg[word] = pres_freq[0]/float(self.num_doc_neg)
+            presence_neg = self.negative_words[word][0]
+            prior_dict_neg[word] = presence_neg/float(self.num_doc_neg) + 1
          
          else:
-            prior_dict_neg[word] = 0
+            prior_dict_neg[word] = 1
 
       #print prior_dict_pos
       return prior_dict_pos, prior_dict_neg
@@ -135,9 +140,16 @@ class Bayes_Classifier:
       return self.num_doc_pos/float(total_doc), self.num_doc_neg/float(total_doc)
 
    def do_bayes(self, prior_dict, class_prior):
+      """
       prob = 1
       for key in prior_dict:
          prob *= prior_dict[key]
+      return class_prior*prob
+      """
+      prob = 0
+      for key in prior_dict:
+         prob += math.log(prior_dict[key])
+      print str(prob) + "prob"
       return class_prior*prob
 
    def loadFile(self, sFilename):
@@ -243,9 +255,6 @@ class Bayes_Classifier:
          #now run classification on the testing set 
          #not sure how to save
 
-
-
-b = Bayes_Classifier()
 
 
 
