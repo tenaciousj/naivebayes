@@ -4,7 +4,7 @@
 #
 #
 
-import math, os, pickle, re
+import math, os, pickle, re, random
 
 class Bayes_Classifier:
 
@@ -17,103 +17,138 @@ class Bayes_Classifier:
       self.positive_words = {}
       self.negative_words = {}
 
+      self.num_doc_pos = 0
+      self.num_doc_neg = 0
+
       #If the pickled files exist, then load the dictionaries into memory.
       if os.path.exists("positive.p"):
-         self.positive_words = pickle.load(open("positive.p", rb))
+         self.positive_words = pickle.load(open("positive.p", "rb"))
+         self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
       if os.path.exists("negative.p"):
-         self.negative_words = pickle.load(open("negative.p", rb))
+         self.negative_words = pickle.load(open("negative.p", "rb"))
+         self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
 
       #If the pickled files do not exist, then train the system.
       else:
          self.train()
-      
+
+
 
    def train(self):   
       """Trains the Naive Bayes Sentiment Classifier."""
+
 
       #Gets the names of all the files in the "movies_reviews/" directory
       IFileList =[]
       for fFileObj in os.walk("movies_reviews/"):
          IFileList = fFileObj[2]
-         break
       
       #Parse each file
       for review in IFileList:
-         loaded_review = load(review)
+         review = "movies_reviews/" + review
+         loaded_review = self.loadFile(review)
          words = self.tokenize(loaded_review)
+         words = [ex.lower() for ex in words]
+         visited_pos = {}
+         visited_neg = {}
 
          #it is a negative review
-         if loaded_review[7] == "1":
-            for i in range(len(words)-1):
-               bigram = words[i] + " " + words[i+1]
-               if self.negative_words[bigram]:
-                  self.negative_words[bigram][1] += 1
+         #print loaded_review
+
+
+         #presence, frequency
+         if review[22] == "1":
+            self.num_doc_neg += 1
+            for word in words:
+               if word in self.negative_words:
+                  if word not in visited_neg:
+                     self.negative_words[word][0] += 1
+                     visited_neg[word] = True
+                  self.negative_words[word][1] += 1
                else:
-                  self.negative_words[bigram][0] += 1
-                  self.negative_words[bigram][1] = 1
+                  self.negative_words[word] = [1,1]
 
          #otherwise it is a positive review
-         else if loaded_review[7] == "5":
-            for i in range(len(words)-1):
-               bigram = words[i] + " " + words[i+1]
-               if self.positive_words[bigram]:
-                  self.positive_words[bigram][1] += 1
+         elif review[22] == "5":
+            self.num_doc_pos += 1
+            for word in words:
+               if word in self.positive_words:
+                  if word not in visited_pos:
+                     self.positive_words[word][0] += 1
+                     visited_pos[word] = True
+                  self.positive_words[word][1] += 1
                else:
-                  self.positive_words[bigram][0] += 1
-                  self.positive_words[bigram][1] = 1
+                  self.positive_words[word] = [1,1]
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
-    
-   def classify(self, sText, num_doc_pos, num_doc_neg, positive_words, negative_words):
+
+      
+      pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
+      pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
+
+
+   def classify(self, sText):
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
 
-      #we might have to load pickle dictionaries
-      prior_dict_pos, prior_dict_neg = calc_cond_prior_prob(sText, num_doc_pos, num_doc_neg)
-      pos_class_prior, neg_class_prior = class_prior_prob(num_doc_pos, num_doc_neg)
+      prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
+      pos_class_prior, neg_class_prior = self.class_prior_prob()
 
-      prob_pos_given_text = do_bayes(prior_dict_pos, pos_class_prior)
-      prob_neg_given_text = do_bayes(prior_dict_neg, neg_class_prior)
+      print prior_dict_pos
 
-      threshold = 0.2
-      if abs(prob_pos_given_text - prob_neg_given_text) < threshold:
-         return "neutral"
-      elif prob_pos_given_text>prob_neg_given_text:
+
+      prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
+      print str(prob_pos_given_text) + " pos probability"
+
+      prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
+      print str(prob_neg_given_text) + " neg probability"
+
+      if prob_pos_given_text>prob_neg_given_text:
          return "positive"
       else:
          return "negative"
 
-   def calc_cond_prior_prob(self, sText, num_doc_pos, num_doc_neg):
+   def calc_cond_prior_prob(self, sText):
       #Check to see if +1 smoothing is necessary because of the 0 occurence
       prior_dict_pos = {}
       prior_dict_neg = {}
+
+      sText = self.tokenize(sText)
+      sText = [ex.lower() for ex in sText]
       for word in sText:
-         if self.positive_words[word]:
-            pres_freq = self.positive_words[word]
-            prior_dict_pos[word] = pres_freq[0]/num_doc_pos
+         if word in self.positive_words:
+            presence_pos = self.positive_words[word][0]
+            prior_dict_pos[word] = presence_pos/float(self.num_doc_pos) + 1
          
          else:
-            prior_dict_pos[word] = 0
+            prior_dict_pos[word] = 1
 
-         if self.negative_words[word]:
-            pres_freq = self.negative_words[word]
-            prior_dict_neg[word] = pres_freq[0]/num_doc_neg
+         if word in self.negative_words:
+            presence_neg = self.negative_words[word][0]
+            prior_dict_neg[word] = presence_neg/float(self.num_doc_neg) + 1
          
          else:
-            prior_dict_neg[word] = 0
+            prior_dict_neg[word] = 1
 
+      #print prior_dict_pos
       return prior_dict_pos, prior_dict_neg
 
-   def class_prior_prob(self, num_doc_pos, num_doc_neg):
-      total_doc = num_doc_pos + num_doc_neg
-      return num_doc_pos/total_doc, num_doc_neg/total_doc
+   def class_prior_prob(self):
+      total_doc = self.num_doc_pos + self.num_doc_neg
+      return self.num_doc_pos/float(total_doc), self.num_doc_neg/float(total_doc)
 
    def do_bayes(self, prior_dict, class_prior):
+      """
       prob = 1
       for key in prior_dict:
          prob *= prior_dict[key]
+      return class_prior*prob
+      """
+      prob = 0
+      for key in prior_dict:
+         prob += math.log(prior_dict[key])
       return class_prior*prob
 
    def loadFile(self, sFilename):
@@ -162,5 +197,74 @@ class Bayes_Classifier:
 
       return lTokens
 
-   #def cross_validation(self, num_doc_pos, num_doc_neg)  
-b = Bayes_Classifier()
+
+   def bigram_tokenize(self, sText):
+      unigram_tokens = self.tokenize(sText)
+      bigram_tokens = []
+
+      for i in range(len(unigram_tokens)-1):
+         bigram_tokens.append(unigram_tokens[i] + " " + unigram_tokens[i+1])
+
+      return bigram_tokens
+
+
+
+   def cross_validation(self):
+      IFileList =[]
+      for fFileObj in os.walk("movies_reviews/"):
+         IFileList = fFileObj[2]
+      
+      #shuffling the list in place
+      random.shuffle(IFileList)
+
+      data_size=len(IFileList) #number of instances
+
+      #bin size
+      bin_size=int(round(data_size/10))
+
+      #list of ten bins. each element is a list. [[bin1]...[bin10]]
+      list_of_bins=[IFileList[i:i + 10] for i in range(0, data_size, 10)]
+
+      testing_set=[]
+      training_set=[]
+
+      for j in range(10):
+         testing_set=list_of_bins[j]
+
+         for bin in list_of_bins:
+            if bin!=testing_set:
+               training_set.extend(bin)
+
+
+         for review in training_set:
+            review = "movies_reviews\\" + review
+            loaded_review = self.loadFile(review)
+            words = self.tokenize(loaded_review)
+
+            #it is a negative review
+            #print loaded_review
+            if review[23] == "1":
+               self.num_doc_neg += 1
+               for word in words:
+                  if word in self.negative_words:
+                     self.negative_words[word][1] += 1
+                  else:
+                     self.negative_words[word][0] += 1
+                     self.negative_words[word][1] = 1
+
+            #otherwise it is a positive review
+            elif review[23] == "5":
+               self.num_doc_pos += 1
+               for word in words:
+                  if word in self.positive_words:
+                     self.positive_words[word][1] += 1
+                  else:
+                     self.positive_words[word][0] += 1
+                     self.positive_words[word][1] = 1
+
+         #now run classification on the testing set 
+         #not sure how to save
+
+
+
+

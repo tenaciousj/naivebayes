@@ -42,6 +42,7 @@ class Bayes_Classifier:
       IFileList =[]
       for fFileObj in os.walk("movies_reviews/"):
          IFileList = fFileObj[2]
+         break
       
       #Parse each file
       for review in IFileList:
@@ -96,14 +97,14 @@ class Bayes_Classifier:
       prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
-      print prior_dict_pos
+      #print prior_dict_pos
 
 
       prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
-      print str(prob_pos_given_text) + " pos probability"
+      #print str(prob_pos_given_text) + " pos probability"
 
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
-      print str(prob_neg_given_text) + " neg probability"
+      #print str(prob_neg_given_text) + " neg probability"
 
       if prob_pos_given_text>prob_neg_given_text:
          return "positive"
@@ -149,7 +150,6 @@ class Bayes_Classifier:
       prob = 0
       for key in prior_dict:
          prob += math.log(prior_dict[key])
-      print str(prob) + "prob"
       return class_prior*prob
 
    def loadFile(self, sFilename):
@@ -198,6 +198,13 @@ class Bayes_Classifier:
 
       return lTokens
 
+
+   def tokens_to_string(self, tokens):
+      new_string = ""
+      for t in tokens:
+         new_string = new_string + t + " "
+      return new_string
+
    def cross_validation(self):
       IFileList =[]
       for fFileObj in os.walk("movies_reviews/"):
@@ -205,6 +212,7 @@ class Bayes_Classifier:
          break
       
       #shuffling the list in place
+      random.seed(0)
       random.shuffle(IFileList)
 
       data_size=len(IFileList) #number of instances
@@ -218,42 +226,63 @@ class Bayes_Classifier:
       testing_set=[]
       training_set=[]
 
+      false_pos = 0
+      false_neg = 0
+      true_pos = 0
+      true_neg = 0
+
       for j in range(10):
+         
+         b = Bayes_Classifier()
          testing_set=list_of_bins[j]
 
          for bin in list_of_bins:
             if bin!=testing_set:
                training_set.extend(bin)
 
-
+         counter = 0
          for review in training_set:
-            review = "movies_reviews\\" + review
-            loaded_review = self.loadFile(review)
-            words = self.tokenize(loaded_review)
+
+            review = "movies_reviews/" + review
+            loaded_review = b.loadFile(review)
+            tokens_review = b.tokenize(loaded_review)
+            review_text = b.tokens_to_string(tokens_review)
+
+            result = b.classify(review_text)
+
+            rating = review[22]
 
             #it is a negative review
-            #print loaded_review
-            if review[23] == "1":
-               self.num_doc_neg += 1
-               for word in words:
-                  if word in self.negative_words:
-                     self.negative_words[word][1] += 1
-                  else:
-                     self.negative_words[word][0] += 1
-                     self.negative_words[word][1] = 1
+            if rating == "1":
+               if result == "negative":
+                  true_neg += 1
+               elif result == "positive":
+                  false_pos += 1
+            elif rating == "5":
+               if result == "negative":
+                  false_neg += 1
+               elif result == "positive":
+                  true_pos += 1
+            counter += 1
+            print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
 
-            #otherwise it is a positive review
-            elif review[23] == "5":
-               self.num_doc_pos += 1
-               for word in words:
-                  if word in self.positive_words:
-                     self.positive_words[word][1] += 1
-                  else:
-                     self.positive_words[word][0] += 1
-                     self.positive_words[word][1] = 1
+      
 
-         #now run classification on the testing set 
-         #not sure how to save
+      pos_precision = true_pos/float(true_pos + false_pos)
+      neg_precision = true_neg/float(true_neg + false_neg) 
+
+      pos_recall = true_pos/float(true_pos + false_neg)
+      neg_recall = true_neg/float(true_neg + false_pos)
+
+      precision=(pos_precision+neg_precision)/2.0
+      recall=(pos_recall+neg_recall)/2.0
+      f1measure=(2*recall*precision)/float(precision+recall)
+      
+
+
+      print str(precision) + " precision"
+      print str(recall) + " recall"
+      print str(f1measure) + " f1-measure"
 
 
 
