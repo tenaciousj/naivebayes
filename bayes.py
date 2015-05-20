@@ -101,10 +101,10 @@ class Bayes_Classifier:
 
 
       prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
-      #print str(prob_pos_given_text) + " pos probability"
+      print str(prob_pos_given_text) + " pos probability"
 
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
-      #print str(prob_neg_given_text) + " neg probability"
+      print str(prob_neg_given_text) + " neg probability"
 
       if prob_pos_given_text>prob_neg_given_text:
          return "positive"
@@ -121,17 +121,17 @@ class Bayes_Classifier:
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
-            prior_dict_pos[word] = presence_pos/float(self.num_doc_pos) + 1
+            prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
          
          else:
-            prior_dict_pos[word] = 1
+            prior_dict_pos[word] = 1/float(self.num_doc_pos)
 
          if word in self.negative_words:
             presence_neg = self.negative_words[word][0]
-            prior_dict_neg[word] = presence_neg/float(self.num_doc_neg) + 1
+            prior_dict_neg[word] = (presence_neg+1)/float(self.num_doc_neg)
          
          else:
-            prior_dict_neg[word] = 1
+            prior_dict_neg[word] = 1/float(self.num_doc_neg)
 
       #print prior_dict_pos
       return prior_dict_pos, prior_dict_neg
