@@ -287,11 +287,13 @@ class Bayes_Classifier:
       print str(f1measure) + " f1-measure"
 
 
-"""
+
 b = Bayes_Classifier()
+b.cross_validation()
+'''
 print b.classify("bad horrible awful terrible")
 print b.classify("I love my AI class")
 print b.classify("I hate my AI class")
 print b.classify("amazing great awesome phenomenal")
 print b.classify("I think that this movie was really well done. It had a lot of interesting plot lines. The acting was very good as well. Despite the director's mistakes, the screenplay was amazing. I absolutely loved this film")
-"""
+'''
