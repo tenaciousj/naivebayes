@@ -20,6 +20,9 @@ class Bayes_Classifier:
       self.num_doc_pos = 0
       self.num_doc_neg = 0
 
+      self.num_pos_words = 0
+      self.num_neg_words = 0
+
       #If the pickled files exist, then load the dictionaries into memory.
       if os.path.exists("positive.p"):
          self.positive_words = pickle.load(open("positive.p", "rb"))
@@ -61,6 +64,7 @@ class Bayes_Classifier:
          if review[22] == "1":
             self.num_doc_neg += 1
             for word in words:
+               self.num_neg_words += 1
                if word in self.negative_words:
                   if word not in visited_neg:
                      self.negative_words[word][0] += 1
@@ -74,6 +78,7 @@ class Bayes_Classifier:
          elif review[22] == "5":
             self.num_doc_pos += 1
             for word in words:
+               self.num_pos_words += 1
                if word in self.positive_words:
                   if word not in visited_pos:
                      self.positive_words[word][0] += 1
@@ -85,7 +90,6 @@ class Bayes_Classifier:
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
       pickle.dump(self.negative_words, open("negative.p", "wb"))
-
       
       pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
       pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
@@ -96,7 +100,7 @@ class Bayes_Classifier:
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
 
-      prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
+      prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
       #print prior_dict_pos
@@ -108,7 +112,13 @@ class Bayes_Classifier:
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
       print str(prob_neg_given_text) + " neg probability"
 
-      
+      prob_pos_given_freq = self.do_bayes(prior_dict_pos_freq, pos_class_prior)
+      print str(prob_pos_given_freq) + " pos probability with freq"
+
+      prob_neg_given_freq = self.do_bayes(prior_dict_neg_freq, neg_class_prior)
+      print str(prob_neg_given_freq) + " neg probability with freq"
+
+
       if abs(prob_pos_given_text)>abs(prob_neg_given_text):
          return "positive"
       else:
@@ -118,26 +128,35 @@ class Bayes_Classifier:
    def calc_cond_prior_prob(self, sText):
       prior_dict_pos = {}
       prior_dict_neg = {}
+      prior_dict_pos_freq = {}
+      prior_dict_neg_freq = {}
+
 
       sText = self.tokenize(sText)
       sText = [ex.lower() for ex in sText]
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
+            freq_pos = self.positive_words[word][1]
             prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
+            prior_dict_pos_freq[word] = (freq_pos+1)/float(self.num_pos_words)
          
          else:
             prior_dict_pos[word] = 1/float(self.num_doc_pos)
+            prior_dict_pos_freq[word] = 1/float(self.num_pos_words)
 
          if word in self.negative_words:
             presence_neg = self.negative_words[word][0]
+            freq_neg = self.negative_words[word][1]
             prior_dict_neg[word] = (presence_neg+1)/float(self.num_doc_neg)
+            prior_dict_neg_freq[word] = (freq_neg+1)/float(self.num_neg_words)
          
          else:
             prior_dict_neg[word] = 1/float(self.num_doc_neg)
+            prior_dict_neg_freq[word] = 1/float(self.num_neg_words) 
 
       #print prior_dict_pos
-      return prior_dict_pos, prior_dict_neg
+      return prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq
 
    def class_prior_prob(self):
       total_doc = self.num_doc_pos + self.num_doc_neg
@@ -153,7 +172,7 @@ class Bayes_Classifier:
       prob = 0
       for key in prior_dict:
          prob += math.log(prior_dict[key])
-      return class_prior*prob
+      return math.log(class_prior) + prob
       
 
    def loadFile(self, sFilename):
@@ -291,3 +310,9 @@ class Bayes_Classifier:
 
 
 
+b = Bayes_Classifier()
+b.classify("bad horrible awful terrible")
+b.classify("I love my AI class")
+b.classify("I hate my AI class")
+#b.classify("horrible")
+b.classify("amazing great awesome phenomenal")
