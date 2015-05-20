@@ -130,7 +130,7 @@ class Bayes_Classifier:
       else:
          return "negative"
       '''
-      if abs(prob_pos_given_freq) < abs(prob_neg_given_freq):
+      if abs(prob_pos_given_freq) > abs(prob_neg_given_freq):
          return "positive"
       else:
          return "negative"
