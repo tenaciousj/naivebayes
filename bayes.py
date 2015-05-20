@@ -67,6 +67,7 @@ class Bayes_Classifier:
                      visited_neg[word] = True
                   self.negative_words[word][1] += 1
                else:
+                  visited_neg[word] = True
                   self.negative_words[word] = [1,1]
 
          #otherwise it is a positive review
@@ -79,6 +80,7 @@ class Bayes_Classifier:
                      visited_pos[word] = True
                   self.positive_words[word][1] += 1
                else:
+                  visited_pos[word] = True
                   self.positive_words[word] = [1,1]
 
       pickle.dump(self.positive_words, open("positive.p", "wb"))
@@ -106,13 +108,14 @@ class Bayes_Classifier:
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
       print str(prob_neg_given_text) + " neg probability"
 
-      if prob_pos_given_text>prob_neg_given_text:
+      
+      if abs(prob_pos_given_text)>abs(prob_neg_given_text):
          return "positive"
       else:
          return "negative"
 
+      
    def calc_cond_prior_prob(self, sText):
-      #Check to see if +1 smoothing is necessary because of the 0 occurence
       prior_dict_pos = {}
       prior_dict_neg = {}
 
@@ -151,6 +154,7 @@ class Bayes_Classifier:
       for key in prior_dict:
          prob += math.log(prior_dict[key])
       return class_prior*prob
+      
 
    def loadFile(self, sFilename):
       """Given a file name, return the contents of the file as a string."""
