@@ -20,19 +20,14 @@ class Bayes_Classifier:
       self.num_doc_pos = 0
       self.num_doc_neg = 0
 
-      #self.num_pos_words = 0
-      #self.num_neg_words = 0
-
       #If the pickled files exist, then load the dictionaries into memory.
       if os.path.exists("positive.p"):
          self.positive_words = pickle.load(open("positive.p", "rb"))
          self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
-         #self.num_pos_words = int(pickle.load(open("num_pos_words.txt", "rb")))
 
       if os.path.exists("negative.p"):
          self.negative_words = pickle.load(open("negative.p", "rb"))
          self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
-         #self.num_neg_words = int(pickle.load(open("num_neg_words.txt", "rb")))
 
       #If the pickled files do not exist, then train the system.
       else:
@@ -59,15 +54,10 @@ class Bayes_Classifier:
          visited_pos = {}
          visited_neg = {}
 
-         #it is a negative review
-         #print loaded_review
-
-
          #presence, frequency
          if review[22] == "1":
-            #self.num_doc_neg += 1
+            self.num_doc_neg += 1
             for word in words:
-               self.num_neg_words += 1
                if word in self.negative_words:
                   if word not in visited_neg:
                      self.negative_words[word][0] += 1
@@ -79,9 +69,8 @@ class Bayes_Classifier:
 
          #otherwise it is a positive review
          elif review[22] == "5":
-            #self.num_doc_pos += 1
+            self.num_doc_pos += 1
             for word in words:
-               self.num_pos_words += 1
                if word in self.positive_words:
                   if word not in visited_pos:
                      self.positive_words[word][0] += 1
@@ -97,46 +86,25 @@ class Bayes_Classifier:
       pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
       pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
 
-      #pickle.dump(self.num_pos_words, open("num_pos_words.txt", "wb"))
-      #pickle.dump(self.num_neg_words, open("num_neg_words.txt", "wb"))
-
 
    def classify(self, sText):
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
 
-      #prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq = self.calc_cond_prior_prob(sText)
       prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
-
-      #print prior_dict_pos
-
 
       prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
       #print str(prob_pos_given_text) + " pos probability"
 
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
       #print str(prob_neg_given_text) + " neg probability"
-
-      #prob_pos_given_freq = self.do_bayes(prior_dict_pos_freq, pos_class_prior)
-      #print str(prob_pos_given_freq) + " pos probability with freq"
-
-      #prob_neg_given_freq = self.do_bayes(prior_dict_neg_freq, neg_class_prior)
-      #print str(prob_neg_given_freq) + " neg probability with freq"
-
       
       if abs(prob_pos_given_text)<abs(prob_neg_given_text):
          return "positive"
       else:
          return "negative"
-
-      '''
-      if abs(prob_pos_given_freq) < abs(prob_neg_given_freq):
-         return "positive"
-      else:
-         return "negative"
-      '''
 
    def calc_cond_prior_prob(self, sText):
       prior_dict_pos = {}
@@ -149,27 +117,19 @@ class Bayes_Classifier:
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
-            #freq_pos = self.positive_words[word][1]
             prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
-            #prior_dict_pos_freq[word] = (freq_pos+1)/float(self.num_pos_words)
          
          else:
             prior_dict_pos[word] = 1/float(self.num_doc_pos)
-            #prior_dict_pos_freq[word] = 1/float(self.num_pos_words)
 
          if word in self.negative_words:
             presence_neg = self.negative_words[word][0]
-            #freq_neg = self.negative_words[word][1]
             prior_dict_neg[word] = (presence_neg+1)/float(self.num_doc_neg)
-            #prior_dict_neg_freq[word] = (freq_neg+1)/float(self.num_neg_words)
          
          else:
             prior_dict_neg[word] = 1/float(self.num_doc_neg)
-            #prior_dict_neg_freq[word] = 1/float(self.num_neg_words) 
 
-      #print prior_dict_pos
       return prior_dict_pos, prior_dict_neg
-      #return prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq
 
    def class_prior_prob(self):
       total_doc = self.num_doc_pos + self.num_doc_neg
@@ -327,12 +287,11 @@ class Bayes_Classifier:
       print str(f1measure) + " f1-measure"
 
 
-'''
+"""
 b = Bayes_Classifier()
 print b.classify("bad horrible awful terrible")
 print b.classify("I love my AI class")
 print b.classify("I hate my AI class")
-#b.classify("horrible")
 print b.classify("amazing great awesome phenomenal")
 print b.classify("I think that this movie was really well done. It had a lot of interesting plot lines. The acting was very good as well. Despite the director's mistakes, the screenplay was amazing. I absolutely loved this film")
-'''
+"""
