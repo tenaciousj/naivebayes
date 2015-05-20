@@ -24,15 +24,15 @@ class Bayes_Classifier:
       self.num_neg_words = 0
 
       #If the pickled files exist, then load the dictionaries into memory.
-      if os.path.exists("positive.p"):
-         self.positive_words = pickle.load(open("positive.p", "rb"))
-         self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
-         self.num_pos_words = int(pickle.load(open("num_pos_words.txt", "rb")))
+      if os.path.exists("positive_best.p"):
+         self.positive_words = pickle.load(open("positive_best.p", "rb"))
+         self.num_doc_pos = int(pickle.load(open("num_doc_pos_best.txt", "rb")))
+         self.num_pos_words = int(pickle.load(open("num_pos_words_best.txt", "rb")))
 
-      if os.path.exists("negative.p"):
-         self.negative_words = pickle.load(open("negative.p", "rb"))
-         self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
-         self.num_neg_words = int(pickle.load(open("num_neg_words.txt", "rb")))
+      if os.path.exists("negative_best.p"):
+         self.negative_words = pickle.load(open("negative_best.p", "rb"))
+         self.num_doc_neg = int(pickle.load(open("num_doc_neg_best.txt", "rb")))
+         self.num_neg_words = int(pickle.load(open("num_neg_words_best.txt", "rb")))
 
       #If the pickled files do not exist, then train the system.
       else:
@@ -91,14 +91,14 @@ class Bayes_Classifier:
                   visited_pos[word] = True
                   self.positive_words[word] = [1,1]
 
-      pickle.dump(self.positive_words, open("positive.p", "wb"))
-      pickle.dump(self.negative_words, open("negative.p", "wb"))
+      pickle.dump(self.positive_words, open("positive_best.p", "wb"))
+      pickle.dump(self.negative_words, open("negative_best.p", "wb"))
       
-      pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
-      pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
+      pickle.dump(self.num_doc_pos, open("num_doc_pos_best.txt", "wb"))
+      pickle.dump(self.num_doc_neg, open("num_doc_neg_best.txt", "wb"))
 
-      pickle.dump(self.num_pos_words, open("num_pos_words.txt", "wb"))
-      pickle.dump(self.num_neg_words, open("num_neg_words.txt", "wb"))
+      pickle.dump(self.num_pos_words, open("num_pos_words_best.txt", "wb"))
+      pickle.dump(self.num_neg_words, open("num_neg_words_best.txt", "wb"))
 
 
    def classify(self, sText):
@@ -181,7 +181,7 @@ class Bayes_Classifier:
       prob = 0
       for key in prior_dict:
          prob += math.log(prior_dict[key])
-      return math.log(class_prior) + prob
+      return math.exp(math.log(class_prior) + prob)
       
 
    def loadFile(self, sFilename):
