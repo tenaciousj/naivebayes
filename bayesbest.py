@@ -52,7 +52,7 @@ class Bayes_Classifier:
       for review in IFileList:
          review = "movies_reviews/" + review
          loaded_review = self.loadFile(review)
-         words = self.tokenize(loaded_review)
+         words = self.bigram_tokenize(loaded_review)
          words = [ex.lower() for ex in words]
          visited_pos = {}
          visited_neg = {}
@@ -66,6 +66,7 @@ class Bayes_Classifier:
             self.num_doc_neg += 1
             for word in words:
                self.num_neg_words += 1
+               #word = words[i] + " " + words[i+1]
                if word in self.negative_words:
                   if word not in visited_neg:
                      self.negative_words[word][0] += 1
@@ -78,8 +79,9 @@ class Bayes_Classifier:
          #otherwise it is a positive review
          elif review[22] == "5":
             self.num_doc_pos += 1
-            for word in words:
+            for word in words:#for i in range(len(words)-1):
                self.num_pos_words += 1
+               #word = words[i] + " " + words[i+1]
                if word in self.positive_words:
                   if word not in visited_pos:
                      self.positive_words[word][0] += 1
@@ -122,24 +124,24 @@ class Bayes_Classifier:
       prob_neg_given_freq = self.do_bayes(prior_dict_neg_freq, neg_class_prior)
       #print str(prob_neg_given_freq) + " neg probability with freq"
 
-      
+      '''
       if abs(prob_pos_given_text)<abs(prob_neg_given_text):
          return "positive"
       else:
          return "negative"
-
+      '''
       if abs(prob_pos_given_freq) < abs(prob_neg_given_freq):
          return "positive"
       else:
          return "negative"
-      
+         
    def calc_cond_prior_prob(self, sText):
       prior_dict_pos = {}
       prior_dict_neg = {}
       prior_dict_pos_freq = {}
       prior_dict_neg_freq = {}
 
-      sText = self.tokenize(sText)
+      sText = self.bigram_tokenize(sText)
       sText = [ex.lower() for ex in sText]
       for word in sText:
          if word in self.positive_words:
@@ -283,7 +285,7 @@ class Bayes_Classifier:
 
             review = "movies_reviews/" + review
             loaded_review = b.loadFile(review)
-            tokens_review = b.tokenize(loaded_review)
+            tokens_review = b.bigram_tokenize(loaded_review)
             review_text = b.tokens_to_string(tokens_review)
 
             result = b.classify(review_text)
@@ -323,9 +325,12 @@ class Bayes_Classifier:
 
 
 b = Bayes_Classifier()
+b.cross_validation()
+'''
 print b.classify("bad horrible awful terrible")
 print b.classify("I love my AI class")
 print b.classify("I hate my AI class")
 #b.classify("horrible")
 print b.classify("amazing great awesome phenomenal")
 print b.classify("I think that this movie was really well done. It had a lot of interesting plot lines. The acting was very good as well. Despite the director's mistakes, the screenplay was amazing. I absolutely loved this film")
+'''
