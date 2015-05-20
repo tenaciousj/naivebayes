@@ -1,6 +1,6 @@
-# Name: 
-# Date:
-# Description:
+# Name: Jeanette Pranin (jrp338), Nishant Subramani (nso155), Jaiveer Kothari (jvk383)
+# Date: 05/20/2015
+# Description: Naive Bayes Classifier with Bigrams, 0.005 smoothing
 #
 #
 
@@ -17,16 +17,18 @@ class Bayes_Classifier:
       self.positive_words = {}
       self.negative_words = {}
 
+      #for presence
       self.num_doc_pos = 0
       self.num_doc_neg = 0
+
       #If the pickled files exist, then load the dictionaries into memory.
       if os.path.exists("positive_best.p"):
          self.positive_words = pickle.load(open("positive_best.p", "rb"))
-         self.num_doc_pos = int(pickle.load(open("num_doc_pos_best.txt", "rb")))
+         self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
 
       if os.path.exists("negative_best.p"):
          self.negative_words = pickle.load(open("negative_best.p", "rb"))
-         self.num_doc_neg = int(pickle.load(open("num_doc_neg_best.txt", "rb")))
+         self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
 
       #If the pickled files do not exist, then train the system.
       else:
@@ -34,7 +36,6 @@ class Bayes_Classifier:
 
    def train(self):   
       """Trains the Naive Bayes Sentiment Classifier."""
-
 
       #Gets the names of all the files in the "movies_reviews/" directory
       IFileList =[]
@@ -81,8 +82,8 @@ class Bayes_Classifier:
       pickle.dump(self.positive_words, open("positive_best.p", "wb"))
       pickle.dump(self.negative_words, open("negative_best.p", "wb"))
       
-      pickle.dump(self.num_doc_pos, open("num_doc_pos_best.txt", "wb"))
-      pickle.dump(self.num_doc_neg, open("num_doc_neg_best.txt", "wb"))
+      pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
+      pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
 
    def classify(self, sText):
       """Given a target string sText, this function returns the most likely document
@@ -93,10 +94,7 @@ class Bayes_Classifier:
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
       prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
-      #print str(prob_pos_given_text) + " pos probability"
-
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
-      #print str(prob_neg_given_text) + " neg probability"
 
       
       if abs(prob_pos_given_text)<abs(prob_neg_given_text):
@@ -113,10 +111,15 @@ class Bayes_Classifier:
       prior_dict_neg = {}
 
       sText = self.bigram_tokenize(sText)
+
+      #to account for the same words but different cases (upper vs lower)
       sText = [ex.lower() for ex in sText]
+
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
+
+            #add 0.005 smoothing
             prior_dict_pos[word] = (presence_pos+0.005)/float(self.num_doc_pos)
          
          else:
@@ -274,7 +277,7 @@ class Bayes_Classifier:
                elif result == "positive":
                   true_pos += 1
             counter += 1
-            print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
+            #print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
 
       #calculate precision, recall, and f1-measure
       pos_precision = true_pos/float(true_pos + false_pos)
@@ -287,6 +290,8 @@ class Bayes_Classifier:
       recall=(pos_recall+neg_recall)/2.0
       f1measure=(2*recall*precision)/float(precision+recall)
       
+      """
       print str(precision) + " precision"
       print str(recall) + " recall"
       print str(f1measure) + " f1-measure"
+      """

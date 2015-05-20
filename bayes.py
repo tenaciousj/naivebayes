@@ -1,6 +1,6 @@
-# Name: 
-# Date:
-# Description:
+# Name: Jeanette Pranin (jrp338), Nishant Subramani (nso155), Jaiveer Kothari (jvk383)
+# Date: 05/20/2015
+# Description: Naive Bayes Classifier
 #
 #
 
@@ -17,9 +17,11 @@ class Bayes_Classifier:
       self.positive_words = {}
       self.negative_words = {}
 
+      #for presence
       self.num_doc_pos = 0
       self.num_doc_neg = 0
 
+      #for frequency
       self.num_pos_words = 0
       self.num_neg_words = 0
 
@@ -40,7 +42,6 @@ class Bayes_Classifier:
 
    def train(self):   
       """Trains the Naive Bayes Sentiment Classifier."""
-
 
       #Gets the names of all the files in the "movies_reviews/" directory
       IFileList =[]
@@ -109,44 +110,35 @@ class Bayes_Classifier:
       prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
-      #print prior_dict_pos
-
-
-      prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
-      #print str(prob_pos_given_text) + " pos probability"
-
-      prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
-      #print str(prob_neg_given_text) + " neg probability"
-
       prob_pos_given_freq = self.do_bayes(prior_dict_pos_freq, pos_class_prior)
-      #print str(prob_pos_given_freq) + " pos probability with freq"
-
       prob_neg_given_freq = self.do_bayes(prior_dict_neg_freq, neg_class_prior)
-      #print str(prob_neg_given_freq) + " neg probability with freq"
 
-      '''
-      if abs(prob_pos_given_text)<abs(prob_neg_given_text):
-         return "positive"
-      else:
-         return "negative"
-      '''
       if abs(prob_pos_given_freq) < abs(prob_neg_given_freq):
          return "positive"
       else:
          return "negative"
          
    def calc_cond_prior_prob(self, sText):
+      """Calculates the prior probability of each element in the positive and negative word dicitonaries
+         Returns two dictionaries, positive and negative, with each key being the word and its value being
+         its prior probability
+      """
       prior_dict_pos = {}
       prior_dict_neg = {}
       prior_dict_pos_freq = {}
       prior_dict_neg_freq = {}
 
       sText = self.tokenize(sText)
+
+      #to account for the same words but different cases (upper vs lower)
       sText = [ex.lower() for ex in sText]
+
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
             freq_pos = self.positive_words[word][1]
+            
+            #add-1 smoothing
             prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
             prior_dict_pos_freq[word] = (freq_pos+1)/float(self.num_pos_words)
          
@@ -164,19 +156,16 @@ class Bayes_Classifier:
             prior_dict_neg[word] = 1/float(self.num_doc_neg)
             prior_dict_neg_freq[word] = 1/float(self.num_neg_words) 
 
-      #print prior_dict_pos
       return prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq
 
    def class_prior_prob(self):
+      """Calculates the class prior probabilities
+      """
       total_doc = self.num_doc_pos + self.num_doc_neg
       return self.num_doc_pos/float(total_doc), self.num_doc_neg/float(total_doc)
 
    def do_bayes(self, prior_dict, class_prior):
-      """
-      prob = 1
-      for key in prior_dict:
-         prob *= prior_dict[key]
-      return class_prior*prob
+      """Performs the Bayes equation
       """
       prob = 0
       for key in prior_dict:
@@ -229,15 +218,6 @@ class Bayes_Classifier:
          lTokens.append(sToken)
 
       return lTokens
-
-   def bigram_tokenize(self, sText):
-      unigram_tokens = self.tokenize(sText)
-      bigram_tokens = []
-
-      for i in range(len(unigram_tokens)-1):
-         bigram_tokens.append(unigram_tokens[i] + " " + unigram_tokens[i+1])
-
-      return bigram_tokens
       
    def tokens_to_string(self, tokens):
       new_string = ""
@@ -246,6 +226,8 @@ class Bayes_Classifier:
       return new_string
 
    def cross_validation(self):
+      """Performs 10-fold cross validation on the naive bayes classifier
+      """
       IFileList =[]
       for fFileObj in os.walk("movies_reviews/"):
          IFileList = fFileObj[2]
@@ -289,7 +271,6 @@ class Bayes_Classifier:
             review_text = b.tokens_to_string(tokens_review)
 
             result = b.classify(review_text)
-
             rating = review[22]
 
             #it is a negative review
@@ -304,7 +285,7 @@ class Bayes_Classifier:
                elif result == "positive":
                   true_pos += 1
             counter += 1
-            print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
+            #print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
 
       pos_precision = true_pos/float(true_pos + false_pos)
       neg_precision = true_neg/float(true_neg + false_neg) 
@@ -315,9 +296,8 @@ class Bayes_Classifier:
       precision=(pos_precision+neg_precision)/2.0
       recall=(pos_recall+neg_recall)/2.0
       f1measure=(2*recall*precision)/float(precision+recall)
-      
-
-
+      """
       print str(precision) + " precision"
       print str(recall) + " recall"
       print str(f1measure) + " f1-measure"
+      """
