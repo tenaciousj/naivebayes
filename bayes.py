@@ -261,7 +261,7 @@ class Bayes_Classifier:
       bin_size=int(round(data_size/10))
 
       #list of ten bins. each element is a list. [[bin1]...[bin10]]
-      list_of_bins=[IFileList[i:i + 10] for i in range(0, data_size, 10)]
+      list_of_bins=[IFileList[i:i + bin_size] for i in range(0, data_size, bin_size)]
 
       testing_set=[]
       training_set=[]
@@ -272,7 +272,7 @@ class Bayes_Classifier:
       true_neg = 0
 
       for j in range(10):
-         
+         training_set = []
          b = Bayes_Classifier()
          testing_set=list_of_bins[j]
 
