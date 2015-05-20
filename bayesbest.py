@@ -126,7 +126,7 @@ class Bayes_Classifier:
       #print str(prob_neg_given_freq) + " neg probability with freq"
 
       
-      if abs(prob_pos_given_text)>abs(prob_neg_given_text):
+      if abs(prob_pos_given_text)<abs(prob_neg_given_text):
          return "positive"
       else:
          return "negative"
@@ -149,21 +149,21 @@ class Bayes_Classifier:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
             # freq_pos = self.positive_words[word][1]
-            prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
+            prior_dict_pos[word] = (presence_pos+0.001)/float(self.num_doc_pos)
             # prior_dict_pos_freq[word] = (freq_pos+1)/float(self.num_pos_words)
          
          else:
-            prior_dict_pos[word] = 1/float(self.num_doc_pos)
+            prior_dict_pos[word] = 0.001/float(self.num_doc_pos)
             # prior_dict_pos_freq[word] = 1/float(self.num_pos_words)
 
          if word in self.negative_words:
             presence_neg = self.negative_words[word][0]
             # freq_neg = self.negative_words[word][1]
-            prior_dict_neg[word] = (presence_neg+1)/float(self.num_doc_neg)
+            prior_dict_neg[word] = (presence_neg+0.001)/float(self.num_doc_neg)
             # prior_dict_neg_freq[word] = (freq_neg+1)/float(self.num_neg_words)
          
          else:
-            prior_dict_neg[word] = 1/float(self.num_doc_neg)
+            prior_dict_neg[word] = 0.001/float(self.num_doc_neg)
             # prior_dict_neg_freq[word] = 1/float(self.num_neg_words) 
 
       #print prior_dict_pos
@@ -184,7 +184,7 @@ class Bayes_Classifier:
       prob = 0
       for key in prior_dict:
          prob += math.log(prior_dict[key])
-      return math.exp(math.log(class_prior) + prob)
+      return math.log(class_prior) + prob
       
 
    def loadFile(self, sFilename):

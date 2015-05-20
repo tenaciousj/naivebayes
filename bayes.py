@@ -181,7 +181,7 @@ class Bayes_Classifier:
       prob = 0
       for key in prior_dict:
          prob += math.log(prior_dict[key])
-      return math.exp(math.log(class_prior) + prob)
+      return math.log(class_prior) + prob
       
 
    def loadFile(self, sFilename):
