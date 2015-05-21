@@ -246,17 +246,20 @@ class Bayes_Classifier:
 def cross_validation():
    """Performs 10-fold cross validation on the naive bayes classifier
    """
-   pos_precision = 0
-   pos_recall = 0
-   pos_fmeasure = 0
+   pos_fmeasure = []
+   neg_fmeasure = []
 
-   neg_precision = 0
-   neg_recall = 0
-   neg_fmeasure = 0
+   pos_precision = []
+   neg_precision = []
+
+   pos_recall = []
+   neg_recall = []
 
 
 
    for j in range(10):
+
+
       pos_file_name = "positive" + str(j) + ".p"
       neg_file_name = "negative" + str(j) + ".p"
       pos_doc_file = "num_doc_pos" + str(j) + ".txt"
@@ -311,24 +314,33 @@ def cross_validation():
          counter += 1
          print str(j) + " in progress: " + str(int(round(100*counter/len(IFileList)))) + "%"
 
-      pos_precision += true_pos/float(true_pos+false_pos)
-      pos_recall+=true_pos/float(true_pos+false_neg)
-      pos_fmeasure = pos_fmeasure + (2*pos_recall*pos_precision)/float(pos_precision+pos_recall)
+      pos_precision.append(true_pos/float(true_pos+false_pos))
+      pos_recall.append(true_pos/float(true_pos+false_neg))
+      pos_fmeasure.append((2*pos_precision[j]*pos_recall[j])/float(pos_precision[j]+pos_recall[j]))
 
-      neg_precision += true_neg/float(true_neg+false_neg)
-      neg_recall+=true_neg/float(true_neg+false_pos)
-      neg_fmeasure = neg_fmeasure + (2*neg_recall*neg_precision)/float(neg_precision+neg_recall)
+      neg_precision.append(true_neg/float(true_neg+false_neg))
+      neg_recall.append(true_neg/float(true_neg+false_pos))
+      neg_fmeasure.append((2*neg_precision[j]*neg_recall[j])/float(neg_precision[j]+neg_recall[j]))
 
 
-   pos_fmeasure /= 10.0
-   neg_fmeasure /= 10.0
+   avg_pos_fmeasure = sum(pos_fmeasure)/len(pos_fmeasure)
+   avg_neg_fmeasure = sum(neg_fmeasure)/len(neg_fmeasure)
+
+   avg_pos_precision = sum(pos_precision)/len(pos_precision)
+   avg_neg_precision = sum(neg_precision)/len(neg_precision)
+
+   avg_pos_recall = sum(pos_recall)/len(pos_recall)
+   avg_neg_recall = sum(neg_recall)/len(neg_recall)
    '''
    print str(precision) + " precision"
    print str(recall) + " recall"
    print str(f1measure) + " f1-measure"
    '''
-   print str(pos_f1measure) + " pos_f1-measure"
-   print str(neg_f1measure) + " neg_f1-measure"
+   print str(avg_pos_fmeasure) + " pos_f1-measure"
+   print str(avg_neg_fmeasure) + " neg_f1-measure"
+   print str(avg_pos_precision) + " avg pos precision"
+   print str(avg_neg_precision) + " avg neg precision"
+   print str(avg_pos_recall) + " avg pos recall"
+   print str(avg_neg_recall) + " avg neg recall"
 
 cross_validation()
-      
