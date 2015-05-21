@@ -246,8 +246,14 @@ class Bayes_Classifier:
 def cross_validation():
    """Performs 10-fold cross validation on the naive bayes classifier
    """
-   precision = 0
-   recall = 0
+   pos_precision = 0
+   pos_recall = 0
+   pos_fmeasure = 0
+
+   neg_precision = 0
+   neg_recall = 0
+   neg_fmeasure = 0
+
 
 
    for j in range(10):
@@ -304,29 +310,25 @@ def cross_validation():
                true_pos += 1
          counter += 1
          print str(j) + " in progress: " + str(int(round(100*counter/len(IFileList)))) + "%"
-      
-      precision += true_pos/float(true_pos+false_pos)
-      recall+=true_pos/float(true_pos+false_neg)
 
-   # pos_precision = true_pos/float(true_pos + false_pos)
-   # neg_precision = true_neg/float(true_neg + false_neg) 
+      pos_precision += true_pos/float(true_pos+false_pos)
+      pos_recall+=true_pos/float(true_pos+false_neg)
+      pos_fmeasure = pos_fmeasure + (2*pos_recall*pos_precision)/float(pos_precision+pos_recall)
 
-   # pos_recall = true_pos/float(true_pos + false_neg)
-   # neg_recall = true_neg/float(true_neg + false_pos)
+      neg_precision += true_neg/float(true_neg+false_neg)
+      neg_recall+=true_neg/float(true_neg+false_pos)
+      neg_fmeasure = neg_fmeasure + (2*neg_recall*neg_precision)/float(neg_precision+neg_recall)
 
-   # precision=(pos_precision+neg_precision)/2.0
-   # recall=(pos_recall+neg_recall)/2.0
 
-   # precision = true_pos/float(true_pos+false_pos)
-   # recall = true_pos/float(true_pos+false_neg)
-
-   precision /= 10.0
-   recall /= 10.0
-   f1measure=(2*recall*precision)/float(precision+recall)
-   
+   pos_fmeasure /= 10.0
+   neg_fmeasure /= 10.0
+   '''
    print str(precision) + " precision"
    print str(recall) + " recall"
    print str(f1measure) + " f1-measure"
+   '''
+   print str(pos_f1measure) + " pos_f1-measure"
+   print str(neg_f1measure) + " neg_f1-measure"
 
 cross_validation()
       
