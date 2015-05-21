@@ -8,7 +8,7 @@ import math, os, pickle, re, random
 
 class Bayes_Classifier:
 
-   def __init__(self):
+   def __init__(self, pos_dict_file = "positive_best.p", neg_dict_file="negative_best.p"):
       """This method initializes and trains the Naive Bayes Sentiment Classifier.  If a 
       cache of a trained classifier has been stored, it loads this cache.  Otherwise, 
       the system will proceed through training.  After running this method, the classifier 
@@ -22,12 +22,12 @@ class Bayes_Classifier:
       self.num_doc_neg = 0
 
       #If the pickled files exist, then load the dictionaries into memory.
-      if os.path.exists("positive_best.p"):
-         self.positive_words = pickle.load(open("positive_best.p", "rb"))
+      if os.path.exists(pos_dict_file):
+         self.positive_words = pickle.load(open(pos_dict_file, "rb"))
          self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
 
-      if os.path.exists("negative_best.p"):
-         self.negative_words = pickle.load(open("negative_best.p", "rb"))
+      if os.path.exists(neg_dict_file):
+         self.negative_words = pickle.load(open(neg_dict_file, "rb"))
          self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
 
       #If the pickled files do not exist, then train the system.
@@ -280,14 +280,17 @@ class Bayes_Classifier:
             #print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
 
       #calculate precision, recall, and f1-measure
-      pos_precision = true_pos/float(true_pos + false_pos)
-      neg_precision = true_neg/float(true_neg + false_neg) 
+      # pos_precision = true_pos/float(true_pos + false_pos)
+      # neg_precision = true_neg/float(true_neg + false_neg) 
 
-      pos_recall = true_pos/float(true_pos + false_neg)
-      neg_recall = true_neg/float(true_neg + false_pos)
+      # pos_recall = true_pos/float(true_pos + false_neg)
+      # neg_recall = true_neg/float(true_neg + false_pos)
 
-      precision=(pos_precision+neg_precision)/2.0
-      recall=(pos_recall+neg_recall)/2.0
+      # precision=(pos_precision+neg_precision)/2.0
+      # recall=(pos_recall+neg_recall)/2.0
+
+      precision = true_pos/float(true_pos + false_pos)
+      recall = true_pos/float(true_pos + false_neg)
       f1measure=(2*recall*precision)/float(precision+recall)
       
       """

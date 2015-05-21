@@ -8,7 +8,11 @@ import math, os, pickle, re, random
 
 class Bayes_Classifier:
 
-   def __init__(self):
+   def __init__(self, pos_doc_file = "positive.p",
+                     neg_doc_file = "negative.p",
+                     num_doc_pos_file = "num_doc_pos.txt",
+                     num_doc_neg_file = "num_doc_neg.txt",
+                     j = -1):
       """This method initializes and trains the Naive Bayes Sentiment Classifier.  If a 
       cache of a trained classifier has been stored, it loads this cache.  Otherwise, 
       the system will proceed through training.  After running this method, the classifier 
@@ -21,26 +25,22 @@ class Bayes_Classifier:
       self.num_doc_pos = 0
       self.num_doc_neg = 0
 
-      #for frequency
-      self.num_pos_words = 0
-      self.num_neg_words = 0
-
       #If the pickled files exist, then load the dictionaries into memory.
-      if os.path.exists("positive.p"):
-         self.positive_words = pickle.load(open("positive.p", "rb"))
-         self.num_doc_pos = int(pickle.load(open("num_doc_pos.txt", "rb")))
-         self.num_pos_words = int(pickle.load(open("num_pos_words.txt", "rb")))
+      if os.path.exists(pos_doc_file):
+         self.positive_words = pickle.load(open(pos_doc_file, "rb"))
+      if os.path.exists(num_doc_pos_file):
+         self.num_doc_pos = int(pickle.load(open(num_doc_pos_file, "rb")))
 
-      if os.path.exists("negative.p"):
-         self.negative_words = pickle.load(open("negative.p", "rb"))
-         self.num_doc_neg = int(pickle.load(open("num_doc_neg.txt", "rb")))
-         self.num_neg_words = int(pickle.load(open("num_neg_words.txt", "rb")))
+      if os.path.exists(neg_doc_file):
+         self.negative_words = pickle.load(open(neg_doc_file, "rb"))
+      if os.path.exists(num_doc_neg_file):
+         self.num_doc_neg = int(pickle.load(open(num_doc_neg_file, "rb")))
 
       #If the pickled files do not exist, then train the system.
       else:
-         self.train()
+         self.train(pos_doc_file, neg_doc_file, num_doc_pos_file, num_doc_neg_file, j)
 
-   def train(self):   
+   def train(self, pos_doc_file, neg_doc_file, num_doc_pos_file, num_doc_neg_file, j):   
       """Trains the Naive Bayes Sentiment Classifier."""
 
       #Gets the names of all the files in the "movies_reviews/" directory
@@ -49,6 +49,27 @@ class Bayes_Classifier:
          IFileList = fFileObj[2]
          break
       
+      if j != -1:
+         #shuffle the list
+         random.seed(0)
+         random.shuffle(IFileList)
+
+         data_size=len(IFileList) #number of instances
+
+         #bin size
+         bin_size=int(round(data_size/10))
+
+         #list of ten bins. each element is a list. [[bin1]...[bin10]]
+         list_of_bins=[IFileList[i:i + bin_size] for i in range(0, data_size, bin_size)]
+
+         training_set = []
+         for bin in list_of_bins:
+            if bin != list_of_bins[j]:
+               training_set.extend(bin)
+
+         IFileList = training_set
+
+
       #Parse each file
       for review in IFileList:
          review = "movies_reviews/" + review
@@ -66,8 +87,6 @@ class Bayes_Classifier:
          if review[22] == "1":
             self.num_doc_neg += 1
             for word in words:
-               self.num_neg_words += 1
-               #word = words[i] + " " + words[i+1]
                if word in self.negative_words:
                   if word not in visited_neg:
                      self.negative_words[word][0] += 1
@@ -80,9 +99,7 @@ class Bayes_Classifier:
          #otherwise it is a positive review
          elif review[22] == "5":
             self.num_doc_pos += 1
-            for word in words:#for i in range(len(words)-1):
-               self.num_pos_words += 1
-               #word = words[i] + " " + words[i+1]
+            for word in words:
                if word in self.positive_words:
                   if word not in visited_pos:
                      self.positive_words[word][0] += 1
@@ -92,14 +109,23 @@ class Bayes_Classifier:
                   visited_pos[word] = True
                   self.positive_words[word] = [1,1]
 
-      pickle.dump(self.positive_words, open("positive.p", "wb"))
-      pickle.dump(self.negative_words, open("negative.p", "wb"))
-      
-      pickle.dump(self.num_doc_pos, open("num_doc_pos.txt", "wb"))
-      pickle.dump(self.num_doc_neg, open("num_doc_neg.txt", "wb"))
 
-      pickle.dump(self.num_pos_words, open("num_pos_words.txt", "wb"))
-      pickle.dump(self.num_neg_words, open("num_neg_words.txt", "wb"))
+      if j == -1:
+         pos_file_name = "positive.p"
+         neg_file_name = "negative.p"
+         pos_doc_file = "num_doc_pos.txt"
+         neg_doc_file = "num_doc_neg.txt"
+      else:
+         pos_file_name = "positive" + str(j) + ".p"
+         neg_file_name = "negative" + str(j) + ".p"
+         pos_doc_file = "num_doc_pos" + str(j) + ".txt"
+         neg_doc_file = "num_doc_neg" + str(j) + ".txt"
+
+      pickle.dump(self.positive_words, open(pos_file_name, "wb"))
+      pickle.dump(self.negative_words, open(neg_file_name, "wb"))
+      
+      pickle.dump(self.num_doc_pos, open(pos_doc_file, "wb"))
+      pickle.dump(self.num_doc_neg, open(neg_doc_file, "wb"))
 
 
    def classify(self, sText):
@@ -107,13 +133,13 @@ class Bayes_Classifier:
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
 
-      prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq = self.calc_cond_prior_prob(sText)
+      prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
-      prob_pos_given_freq = self.do_bayes(prior_dict_pos_freq, pos_class_prior)
-      prob_neg_given_freq = self.do_bayes(prior_dict_neg_freq, neg_class_prior)
+      prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
+      prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
 
-      if abs(prob_pos_given_freq) < abs(prob_neg_given_freq):
+      if abs(prob_pos_given_text) < abs(prob_neg_given_text):
          return "positive"
       else:
          return "negative"
@@ -125,8 +151,6 @@ class Bayes_Classifier:
       """
       prior_dict_pos = {}
       prior_dict_neg = {}
-      prior_dict_pos_freq = {}
-      prior_dict_neg_freq = {}
 
       sText = self.tokenize(sText)
 
@@ -136,27 +160,21 @@ class Bayes_Classifier:
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
-            freq_pos = self.positive_words[word][1]
             
             #add-1 smoothing
             prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
-            prior_dict_pos_freq[word] = (freq_pos+1)/float(self.num_pos_words)
          
          else:
             prior_dict_pos[word] = 1/float(self.num_doc_pos)
-            prior_dict_pos_freq[word] = 1/float(self.num_pos_words)
 
          if word in self.negative_words:
             presence_neg = self.negative_words[word][0]
-            freq_neg = self.negative_words[word][1]
             prior_dict_neg[word] = (presence_neg+1)/float(self.num_doc_neg)
-            prior_dict_neg_freq[word] = (freq_neg+1)/float(self.num_neg_words)
          
          else:
             prior_dict_neg[word] = 1/float(self.num_doc_neg)
-            prior_dict_neg_freq[word] = 1/float(self.num_neg_words) 
 
-      return prior_dict_pos, prior_dict_neg, prior_dict_pos_freq, prior_dict_neg_freq
+      return prior_dict_pos, prior_dict_neg
 
    def class_prior_prob(self):
       """Calculates the class prior probabilities
@@ -225,14 +243,23 @@ class Bayes_Classifier:
          new_string = new_string + t + " "
       return new_string
 
-   def cross_validation(self):
-      """Performs 10-fold cross validation on the naive bayes classifier
-      """
+def cross_validation():
+   """Performs 10-fold cross validation on the naive bayes classifier
+   """
+   precision = 0
+   recall = 0
+
+
+   for j in range(10):
+      pos_file_name = "positive" + str(j) + ".p"
+      neg_file_name = "negative" + str(j) + ".p"
+      pos_doc_file = "num_doc_pos" + str(j) + ".txt"
+      neg_doc_file = "num_doc_neg" + str(j) + ".txt"
+      bc = Bayes_Classifier(pos_file_name, neg_file_name, pos_doc_file, neg_doc_file, j)
       IFileList =[]
       for fFileObj in os.walk("movies_reviews/"):
          IFileList = fFileObj[2]
          break
-      
       #shuffling the list in place
       random.seed(0)
       random.shuffle(IFileList)
@@ -244,60 +271,62 @@ class Bayes_Classifier:
 
       #list of ten bins. each element is a list. [[bin1]...[bin10]]
       list_of_bins=[IFileList[i:i + bin_size] for i in range(0, data_size, bin_size)]
+      
+      IFileList = list_of_bins[j]
 
-      testing_set=[]
-      training_set=[]
 
       false_pos = 0
       false_neg = 0
       true_pos = 0
       true_neg = 0
 
-      for j in range(10):
-         training_set = []
-         b = Bayes_Classifier()
-         testing_set=list_of_bins[j]
+      counter = 0
+      for review in IFileList:
 
-         for bin in list_of_bins:
-            if bin!=testing_set:
-               training_set.extend(bin)
+         review = "movies_reviews/" + review
+         loaded_review = bc.loadFile(review)
+         tokens_review = bc.tokenize(loaded_review)
+         review_text = bc.tokens_to_string(tokens_review)
 
-         counter = 0
-         for review in training_set:
+         result = bc.classify(review_text)
+         rating = review[22]
 
-            review = "movies_reviews/" + review
-            loaded_review = b.loadFile(review)
-            tokens_review = b.tokenize(loaded_review)
-            review_text = b.tokens_to_string(tokens_review)
+         #it is a negative review
+         if rating == "1":
+            if result == "negative":
+               true_neg += 1
+            elif result == "positive":
+               false_pos += 1
+         elif rating == "5":
+            if result == "negative":
+               false_neg += 1
+            elif result == "positive":
+               true_pos += 1
+         counter += 1
+         print str(j) + " in progress: " + str(int(round(100*counter/len(IFileList)))) + "%"
+      
+      precision += true_pos/float(true_pos+false_pos)
+      recall+=true_pos/float(true_pos+false_neg)
 
-            result = b.classify(review_text)
-            rating = review[22]
+   # pos_precision = true_pos/float(true_pos + false_pos)
+   # neg_precision = true_neg/float(true_neg + false_neg) 
 
-            #it is a negative review
-            if rating == "1":
-               if result == "negative":
-                  true_neg += 1
-               elif result == "positive":
-                  false_pos += 1
-            elif rating == "5":
-               if result == "negative":
-                  false_neg += 1
-               elif result == "positive":
-                  true_pos += 1
-            counter += 1
-            #print str(j) + " in progress: " + str(int(round(100*counter/len(training_set)))) + "%"
+   # pos_recall = true_pos/float(true_pos + false_neg)
+   # neg_recall = true_neg/float(true_neg + false_pos)
 
-      pos_precision = true_pos/float(true_pos + false_pos)
-      neg_precision = true_neg/float(true_neg + false_neg) 
+   # precision=(pos_precision+neg_precision)/2.0
+   # recall=(pos_recall+neg_recall)/2.0
 
-      pos_recall = true_pos/float(true_pos + false_neg)
-      neg_recall = true_neg/float(true_neg + false_pos)
+   # precision = true_pos/float(true_pos+false_pos)
+   # recall = true_pos/float(true_pos+false_neg)
 
-      precision=(pos_precision+neg_precision)/2.0
-      recall=(pos_recall+neg_recall)/2.0
-      f1measure=(2*recall*precision)/float(precision+recall)
-      """
-      print str(precision) + " precision"
-      print str(recall) + " recall"
-      print str(f1measure) + " f1-measure"
-      """
+   precision /= 10.0
+   recall /= 10.0
+   f1measure=(2*recall*precision)/float(precision+recall)
+   
+   print str(precision) + " precision"
+   print str(recall) + " recall"
+   print str(f1measure) + " f1-measure"
+
+cross_validation()
+      
