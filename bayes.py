@@ -236,6 +236,7 @@ class Bayes_Classifier:
          lTokens.append(sToken)
 
       return lTokens
+
       
    def tokens_to_string(self, tokens):
       new_string = ""
@@ -255,7 +256,21 @@ def cross_validation():
    pos_recall = []
    neg_recall = []
 
+   IFileList =[]
+   for fFileObj in os.walk("movies_reviews/"):
+      IFileList = fFileObj[2]
+      break
+   #shuffling the list in place
+   random.seed(0)
+   random.shuffle(IFileList)
 
+   data_size=len(IFileList) #number of instances
+
+   #bin size
+   bin_size=int(round(data_size/10))
+
+   #list of ten bins. each element is a list. [[bin1]...[bin10]]
+   list_of_bins=[IFileList[i:i + bin_size] for i in range(0, data_size, bin_size)]
 
    for j in range(10):
 
@@ -265,21 +280,7 @@ def cross_validation():
       pos_doc_file = "num_doc_pos" + str(j) + ".txt"
       neg_doc_file = "num_doc_neg" + str(j) + ".txt"
       bc = Bayes_Classifier(pos_file_name, neg_file_name, pos_doc_file, neg_doc_file, j)
-      IFileList =[]
-      for fFileObj in os.walk("movies_reviews/"):
-         IFileList = fFileObj[2]
-         break
-      #shuffling the list in place
-      random.seed(0)
-      random.shuffle(IFileList)
-
-      data_size=len(IFileList) #number of instances
-
-      #bin size
-      bin_size=int(round(data_size/10))
-
-      #list of ten bins. each element is a list. [[bin1]...[bin10]]
-      list_of_bins=[IFileList[i:i + bin_size] for i in range(0, data_size, bin_size)]
+      
       
       IFileList = list_of_bins[j]
 
@@ -331,11 +332,7 @@ def cross_validation():
 
    avg_pos_recall = sum(pos_recall)/len(pos_recall)
    avg_neg_recall = sum(neg_recall)/len(neg_recall)
-   '''
-   print str(precision) + " precision"
-   print str(recall) + " recall"
-   print str(f1measure) + " f1-measure"
-   '''
+   
    print str(avg_pos_fmeasure) + " pos_f1-measure"
    print str(avg_neg_fmeasure) + " neg_f1-measure"
    print str(avg_pos_precision) + " avg pos precision"
