@@ -16,7 +16,7 @@ class Bayes_Best_Classifier:
       """This method initializes and trains the Naive Bayes Sentiment Classifier.  If a 
       cache of a trained classifier has been stored, it loads this cache.  Otherwise, 
       the system will proceed through training.  After running this method, the classifier 
-      is ready to classify input text."""
+      is ready to classify input text. This classifier uses bigrams rather than unigrams."""
 
       # creating dictionaries for positive and negative words
       self.positive_words = {}
