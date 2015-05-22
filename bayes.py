@@ -40,7 +40,11 @@ class Bayes_Classifier:
       else:
          self.train(pos_doc_file, neg_doc_file, num_doc_pos_file, num_doc_neg_file, j)
 
-   def train(self, pos_doc_file, neg_doc_file, num_doc_pos_file, num_doc_neg_file, j):   
+   def train(self, pos_doc_file = "positive.p",
+                  neg_doc_file="negative.p",
+                  num_doc_pos_file="num_doc_pos.txt",
+                  num_doc_neg_file= "num_doc_neg.txt",
+                  j=-1):   
       """Trains the Naive Bayes Sentiment Classifier."""
 
       #Gets the names of all the files in the "movies_reviews/" directory
@@ -340,4 +344,3 @@ def cross_validation():
    print str(avg_pos_recall) + " avg pos recall"
    print str(avg_neg_recall) + " avg neg recall"
 
-cross_validation()

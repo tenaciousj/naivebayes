@@ -40,7 +40,11 @@ class Bayes_Best_Classifier:
       else:
          self.train(pos_doc_file, neg_doc_file, num_doc_pos_file, num_doc_neg_file, j)
 
-   def train(self, pos_doc_file, neg_doc_file, num_doc_pos_file, num_doc_neg_file, j):   
+   def train(self, pos_doc_file = "positive_best.p",
+                  neg_doc_file="negative_best.p",
+                  num_doc_pos_file="num_doc_pos_best.txt",
+                  num_doc_neg_file="num_doc_neg_best.txt",
+                  j=-1):   
       """Trains the Naive Bayes Sentiment Classifier."""
 
       #Gets the names of all the files in the "movies_reviews/" directory
@@ -162,17 +166,17 @@ class Bayes_Best_Classifier:
             presence_pos = self.positive_words[word][0]
             
             #add-1 smoothing
-            prior_dict_pos[word] = (presence_pos+1)/float(self.num_doc_pos)
+            prior_dict_pos[word] = (presence_pos+0.001)/float(self.num_doc_pos)
          
          else:
-            prior_dict_pos[word] = 1/float(self.num_doc_pos)
+            prior_dict_pos[word] = 0.001/float(self.num_doc_pos)
 
          if word in self.negative_words:
             presence_neg = self.negative_words[word][0]
-            prior_dict_neg[word] = (presence_neg+1)/float(self.num_doc_neg)
+            prior_dict_neg[word] = (presence_neg+0.001)/float(self.num_doc_neg)
          
          else:
-            prior_dict_neg[word] = 1/float(self.num_doc_neg)
+            prior_dict_neg[word] = 0.001/float(self.num_doc_neg)
 
       return prior_dict_pos, prior_dict_neg
 
@@ -289,7 +293,7 @@ def cross_validation():
       neg_file_name = "negative_best" + str(j) + ".p"
       pos_doc_file = "num_doc_pos_best" + str(j) + ".txt"
       neg_doc_file = "num_doc_neg_best" + str(j) + ".txt"
-      bc = Bayes_Classifier(pos_file_name, neg_file_name, pos_doc_file, neg_doc_file, j)
+      bc = Bayes_Best_Classifier(pos_file_name, neg_file_name, pos_doc_file, neg_doc_file, j)
       
       
       IFileList = list_of_bins[j]
@@ -349,6 +353,3 @@ def cross_validation():
    print str(avg_neg_precision) + " avg neg precision"
    print str(avg_pos_recall) + " avg pos recall"
    print str(avg_neg_recall) + " avg neg recall"
-
-b=Bayes_Best_Classifier()
-cross_validation()
