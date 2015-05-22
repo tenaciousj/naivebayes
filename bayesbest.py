@@ -18,6 +18,7 @@ class Bayes_Best_Classifier:
       the system will proceed through training.  After running this method, the classifier 
       is ready to classify input text."""
 
+      # creating dictionaries for positive and negative words
       self.positive_words = {}
       self.negative_words = {}
 
@@ -113,7 +114,7 @@ class Bayes_Best_Classifier:
                   visited_pos[word] = True
                   self.positive_words[word] = [1,1]
 
-
+      #if we dont do 10fcv
       if j == -1:
          pos_file_name = "positive_best.p"
          neg_file_name = "negative_best.p"
@@ -125,6 +126,8 @@ class Bayes_Best_Classifier:
          pos_doc_file = "num_doc_pos_best" + str(j) + ".txt"
          neg_doc_file = "num_doc_neg_best" + str(j) + ".txt"
 
+
+      # create new pythin dictionaries
       pickle.dump(self.positive_words, open(pos_file_name, "wb"))
       pickle.dump(self.negative_words, open(neg_file_name, "wb"))
       
@@ -136,13 +139,15 @@ class Bayes_Best_Classifier:
       """Given a target string sText, this function returns the most likely document
       class to which the target string belongs (i.e., positive, negative or neutral).
       """
-
+      #getting prior probabilities 
       prior_dict_pos, prior_dict_neg = self.calc_cond_prior_prob(sText)
       pos_class_prior, neg_class_prior = self.class_prior_prob()
 
+      #conditional probabilities
       prob_pos_given_text = self.do_bayes(prior_dict_pos, pos_class_prior)
       prob_neg_given_text = self.do_bayes(prior_dict_neg, neg_class_prior)
 
+      #because not using exponents the smaller probablilty value replesents positive
       if abs(prob_pos_given_text) < abs(prob_neg_given_text):
          return "positive"
       else:
@@ -153,14 +158,18 @@ class Bayes_Best_Classifier:
          Returns two dictionaries, positive and negative, with each key being the word and its value being
          its prior probability
       """
+
+      #creating dictionaries
       prior_dict_pos = {}
       prior_dict_neg = {}
 
+      # getting text as list of bigrams
       sText = self.bigram_tokenize(sText)
 
       #to account for the same words but different cases (upper vs lower)
       sText = [ex.lower() for ex in sText]
 
+      # iterating through the list
       for word in sText:
          if word in self.positive_words:
             presence_pos = self.positive_words[word][0]
@@ -183,6 +192,7 @@ class Bayes_Best_Classifier:
    def class_prior_prob(self):
       """Calculates the class prior probabilities
       """
+
       total_doc = self.num_doc_pos + self.num_doc_neg
       return self.num_doc_pos/float(total_doc), self.num_doc_neg/float(total_doc)
 
@@ -192,6 +202,9 @@ class Bayes_Best_Classifier:
       prob = 0
       for key in prior_dict:
          prob += math.log(prior_dict[key])
+      # adding the logs of the probabilities
+
+      # returning the sume of the log of the class prior and the prior probabilities
       return math.log(class_prior) + prob
       
 
@@ -244,9 +257,11 @@ class Bayes_Best_Classifier:
    def bigram_tokenize(self, sText):
       """Given a string of text sText, returns a list of the bigram tokens that 
       occur in that string (in order)."""
+
       unigram_tokens = self.tokenize(sText)
       bigram_tokens = []
 
+      #iterating through the unigrams and joining two succesive ones together
       for i in range(len(unigram_tokens)-1):
          bigram_tokens.append(unigram_tokens[i] + " " + unigram_tokens[i+1])
 
@@ -261,12 +276,15 @@ class Bayes_Best_Classifier:
 def cross_validation():
    """Performs 10-fold cross validation on the naive bayes classifier
    """
+   #list of f measures
    pos_fmeasure = []
    neg_fmeasure = []
 
+   #list of precision values
    pos_precision = []
    neg_precision = []
 
+   # list of recall values
    pos_recall = []
    neg_recall = []
 
@@ -286,16 +304,17 @@ def cross_validation():
    #list of ten bins. each element is a list. [[bin1]...[bin10]]
    list_of_bins=[IFileList[i:i + bin_size] for i in range(0, data_size, bin_size)]
 
+   # j is the index of the fold
    for j in range(10):
 
-
+      # naming the files differently according to the index of the fold
       pos_file_name = "positive_best" + str(j) + ".p"
       neg_file_name = "negative_best" + str(j) + ".p"
       pos_doc_file = "num_doc_pos_best" + str(j) + ".txt"
       neg_doc_file = "num_doc_neg_best" + str(j) + ".txt"
       bc = Bayes_Best_Classifier(pos_file_name, neg_file_name, pos_doc_file, neg_doc_file, j)
       
-      
+      #testing set
       IFileList = list_of_bins[j]
 
 
@@ -329,6 +348,7 @@ def cross_validation():
          counter += 1
          print str(j) + " in progress: " + str(int(round(100*counter/len(IFileList)))) + "%"
 
+      # calculating the precsion, recall and fmeasure
       pos_precision.append(true_pos/float(true_pos+false_pos))
       pos_recall.append(true_pos/float(true_pos+false_neg))
       pos_fmeasure.append((2*pos_precision[j]*pos_recall[j])/float(pos_precision[j]+pos_recall[j]))
@@ -337,7 +357,7 @@ def cross_validation():
       neg_recall.append(true_neg/float(true_neg+false_pos))
       neg_fmeasure.append((2*neg_precision[j]*neg_recall[j])/float(neg_precision[j]+neg_recall[j]))
 
-
+   # taking the average across all 10 folds
    avg_pos_fmeasure = sum(pos_fmeasure)/len(pos_fmeasure)
    avg_neg_fmeasure = sum(neg_fmeasure)/len(neg_fmeasure)
 
